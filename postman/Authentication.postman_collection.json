@@ -1,0 +1,441 @@
+{
+  "info": {
+    "_postman_id": "7af743c3-ef63-406b-bf2e-98df0ff65607",
+    "name": "Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "30803319"
+  },
+  "item": [
+    {
+      "name": "Exhibitor Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();\r",
+              "pm.environment.set(\"token\", jsonData.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Sali",
+              "type": "text",
+              "uuid": "4794a970-4ebb-4d0a-8456-efc322589c1d"
+            },
+            {
+              "key": "email",
+              "value": "sali@gmail.com",
+              "type": "text",
+              "uuid": "c8afd665-aee6-4ad7-86a4-65436fdcb2bd"
+            },
+            {
+              "key": "password",
+              "value": "Sali#123",
+              "type": "text",
+              "uuid": "12d050c5-35a5-4074-bdfb-3218851c53a9"
+            },
+            {
+              "key": "password_confirmation",
+              "value": "Sali#123",
+              "type": "text",
+              "uuid": "a74e77ca-1e54-47da-8adf-bb6ad1030e8f"
+            },
+            {
+              "key": "brand_name",
+              "value": "vestrum circumvenio",
+              "type": "text",
+              "uuid": "6e615a98-141f-4cf1-9501-f1c8f0bb53fa"
+            },
+            {
+              "key": "industry",
+              "value": "stationary",
+              "type": "text",
+              "uuid": "5f98cc30-5d3d-4c25-9ee5-d44e86e6d7e9"
+            },
+            {
+              "key": "phone",
+              "value": "996824184",
+              "type": "text",
+              "uuid": "c27bf78f-8559-4a62-acf4-98ae3f700f08"
+            },
+            {
+              "key": "city",
+              "value": "Damascus",
+              "type": "text",
+              "uuid": "de129b5f-9b9a-4573-9438-b22be19bfc4e"
+            },
+            {
+              "key": "country",
+              "value": "Al-Malki",
+              "type": "text",
+              "uuid": "c352378f-0aad-4f8b-a1aa-29f66cad9e02"
+            },
+            {
+              "key": "description",
+              "value": "Demens thymbra vulgus. Atqui verbum rem. Pariatur advenio clamo complectus theca colligo concedo volo cumque.",
+              "type": "text",
+              "uuid": "7b0a20be-32e2-487d-85f6-e0520a7689a0"
+            },
+            {
+              "key": "logo",
+              "value": "uterque carbo vae vestrum circumvenio",
+              "type": "text",
+              "uuid": "125ded4a-4747-408c-aab6-96f14f1a839e"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/exhibitor-register",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "exhibitor-register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Organizer Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();\r",
+              "pm.environment.set(\"token\", jsonData.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Majd",
+              "type": "text",
+              "uuid": "4794a970-4ebb-4d0a-8456-efc322589c1d"
+            },
+            {
+              "key": "email",
+              "value": "majd@gmail.com",
+              "type": "text",
+              "uuid": "c8afd665-aee6-4ad7-86a4-65436fdcb2bd"
+            },
+            {
+              "key": "password",
+              "value": "Majd#123",
+              "type": "text",
+              "uuid": "12d050c5-35a5-4074-bdfb-3218851c53a9"
+            },
+            {
+              "key": "password_confirmation",
+              "value": "Majd#123",
+              "type": "text",
+              "uuid": "a74e77ca-1e54-47da-8adf-bb6ad1030e8f"
+            },
+            {
+              "key": "company_name",
+              "value": "Zero",
+              "type": "text",
+              "uuid": "6e615a98-141f-4cf1-9501-f1c8f0bb53fa"
+            },
+            {
+              "key": "company_type",
+              "value": "private",
+              "type": "text",
+              "uuid": "5f98cc30-5d3d-4c25-9ee5-d44e86e6d7e9"
+            },
+            {
+              "key": "phone",
+              "value": "995672414",
+              "type": "text",
+              "uuid": "c27bf78f-8559-4a62-acf4-98ae3f700f08"
+            },
+            {
+              "key": "city",
+              "value": "Damascus",
+              "type": "text",
+              "uuid": "de129b5f-9b9a-4573-9438-b22be19bfc4e"
+            },
+            {
+              "key": "country",
+              "value": "Al-Midan",
+              "type": "text",
+              "uuid": "c352378f-0aad-4f8b-a1aa-29f66cad9e02"
+            },
+            {
+              "key": "commercial_register",
+              "value": "1020307080",
+              "type": "text",
+              "uuid": "7b0a20be-32e2-487d-85f6-e0520a7689a0"
+            },
+            {
+              "key": "website",
+              "value": "http://danny.info",
+              "type": "text",
+              "uuid": "125ded4a-4747-408c-aab6-96f14f1a839e"
+            },
+            {
+              "key": "bio",
+              "value": "Demens thymbra vulgus. Atqui verbum rem. Pariatur advenio clamo complectus theca colligo concedo volo cumque.",
+              "type": "text",
+              "uuid": "d7a634c3-cc4a-412e-9f43-8e8c7baf78ed"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/organizer-register",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "organizer-register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Visitor Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();\r",
+              "pm.environment.set(\"token\", jsonData.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Salam",
+              "type": "text",
+              "uuid": "ca013dfd-0017-4e82-b06a-a0d999fb149c"
+            },
+            {
+              "key": "email",
+              "value": "salam@gmail.com",
+              "type": "text",
+              "uuid": "b877acd6-2856-4255-96ac-a4d40acfd40a"
+            },
+            {
+              "key": "password",
+              "value": "Salam#123",
+              "type": "text",
+              "uuid": "7027f16f-3cfd-43a0-908d-7de69bd614c9"
+            },
+            {
+              "key": "password_confirmation",
+              "value": "Salam#123",
+              "type": "text",
+              "uuid": "ac2406bb-4700-45b9-a1f2-15b9a928441e"
+            },
+            {
+              "key": "phone",
+              "value": "944857321",
+              "type": "text",
+              "uuid": "40210383-66c4-440c-b927-cd8d2a61e489"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/visitor-register",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "visitor-register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();\r",
+              "pm.environment.set(\"token\", jsonData.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "email",
+              "value": "sara@gmail.com",
+              "type": "text",
+              "uuid": "278f10ee-4062-4231-ac31-582ef7cddee2"
+            },
+            {
+              "key": "password",
+              "value": "sara#123",
+              "type": "text",
+              "uuid": "c144a416-cfd0-476c-81ae-3b808c3483f0"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/login",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/logout",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "logout"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
