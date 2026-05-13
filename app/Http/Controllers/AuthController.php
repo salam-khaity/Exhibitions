@@ -18,14 +18,14 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
         'name'                  => 'required|string|max:100',
         'email'                 => 'required|email|unique:users,email',
-        'password'              => [
+            'password' => [
             'required',
             'confirmed',
-            'min:6',
-            'regex:/[A-Z]/',
-            'regex:/[0-9]/',
-            'regex:/[@$!%*#?\u0026]/',
-        ],
+            Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols(),
+],
         'company_name'          => 'required|string|max:150',
         'company_type'          => 'required|in:government,private,nonprofit',
         'phone'                 => 'required|string|max:20',
@@ -73,13 +73,13 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name'      => 'required|string|max:100',
             'email'     => 'required|email|unique:users,email',
-            'password'              => [
+            'password' => [
             'required',
             'confirmed',
-            'min:6',
-            'regex:/[A-Z]/',
-            'regex:/[0-9]/',
-            'regex:/[@$!%*#?\u0026]/',
+            Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols(),
         ],
         'brand_name'    => 'required|string|max:150',
         'industry'      => 'required|string|max:100',
@@ -124,15 +124,15 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name'      => 'required|string|max:100',
             'email'     => 'required|email|unique:users,email',
-            'password'              =>[
+            'password' => [
             'required',
             'confirmed',
-            'min:6',
-            'regex:/[A-Z]/',
-            'regex:/[0-9]/',
-            'regex:/[@$!%*#?\u0026]/',
+            Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols(),
         ],
-        'phone'         => 'nullable|string|max:20',
+        'phone' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
