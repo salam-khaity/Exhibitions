@@ -13,6 +13,19 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 class AuthController extends Controller
 {
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'role' => 'required|in:visitor,exhibitor,organizer',
+    ]);
+
+    return match($request->role) {
+        'visitor'   => $this->visitorRegister($request),
+        'exhibitor' => $this->exhibitorRegister($request),
+        'organizer' => $this->organizerRegister($request),
+    };
+}
     public function organizerRegister(Request $request){
 
         $validator = Validator::make($request->all(), [
