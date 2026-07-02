@@ -20,9 +20,18 @@ Route::get('/user', function (Request $request) {
 Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-//عرض و تعديل الملف الشخصي للمنظم 
 Route::middleware(['auth:sanctum', 'role:organizer'])
 ->group(function () {
+    //عرض و تعديل الملف الشخصي للمنظم
     Route::get('/organizer-show', [ProfileController::class, 'organizerShow']);
     Route::put('/organizer-update', [ProfileController::class, 'organizerUpdate']);
+
+    // Crud للمعارض للمنظم المسجل دخول حاليا فقط
+    Route::get('/exhibitions', [ExhibitionController::class, 'index']);
+    Route::get('/exhibitions/{id}', [ExhibitionController::class, 'show']);
+    Route::post('/exhibitions', [ExhibitionController::class, 'store']);
+    Route::put('/exhibitions/{id}', [ExhibitionController::class, 'update']);
+    Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'destroy']);
+
+
 });

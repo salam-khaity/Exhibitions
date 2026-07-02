@@ -52,4 +52,9 @@ class User extends Authenticatable
         return $this->hasOne(Organizer::class, 'user_id');
     }
 
+    public function exhibitions()
+    {
+        return $this->hasMany(Exhibition::class, 'organizer_id');
+    }
+
 }
