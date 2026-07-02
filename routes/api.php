@@ -33,5 +33,13 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/exhibitions/{id}', [ExhibitionController::class, 'update']);
     Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'destroy']);
 
+});
 
+Route::middleware(['auth:sanctum', 'role:admin'])
+->prefix('admin')
+->group(function () {
+    Route::get('/exhibitions',        [ExhibitionController::class, 'list']);
+    Route::get('/exhibitions/{id}',   [ExhibitionController::class, 'read']);
+    Route::put('/exhibitions/{id}',   [ExhibitionController::class, 'edit']);
+    Route::delete('/exhibitions/{id}',[ExhibitionController::class, 'delete']);
 });

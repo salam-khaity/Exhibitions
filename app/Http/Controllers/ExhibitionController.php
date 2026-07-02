@@ -127,4 +127,95 @@ class ExhibitionController extends Controller
                 'message' => 'Exhibition deleted successfully'
             ]);
     }
+
+//    _________________________________________________________________________
+
+// قسم الادمن
+
+    public function list()
+    {
+        $exhibitions = Exhibition::with('organizer:id,name,email')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $exhibitions
+        ]);
+    }
+
+
+    public function read($id)
+    {
+        $exhibition = Exhibition::with('organizer:id,name,email')
+            ->find($id);
+        if (!$exhibition) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Exhibition not found'
+            ], 404);
+        }
+        return response()->json([
+            'status' => 'success',
+            'data'   => $exhibition
+        ]);
+    }
+
+    public function edit(Request $request, $id)
+    {
+        $exhibition = Exhibition::find($id);
+
+        if (!$exhibition) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The specific exhibition does not exist'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title'       => 'sometimes|string|max:150',
+            'description' => 'sometimes|string',
+            'location'    => 'sometimes|string|max:255',
+            'start_date'  => 'sometimes|date',
+            'end_date'    => 'sometimes|date|after_or_equal:start_date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                    'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $exhibition->update($request->only([
+                'title',
+                'description',
+                'location',
+                'start_date',
+                'end_date',
+            ]));
+
+        return response()->json([
+                'status' => 'success',
+            'data'   => $exhibition
+        ]);
+    }
+
+    public function delete($id)
+    {
+        $exhibition = Exhibition::find($id);
+        if (!$exhibition) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The exhibition does not exist'
+            ], 404);
+        }
+        $exhibition->delete();
+
+        return response()->json([
+                'status'  => 'success',
+            'message' => 'Exhibition deleted successfully'
+        ]);
+    }
+
 }
