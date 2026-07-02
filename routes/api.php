@@ -2,6 +2,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExhibitionController;
 use App\Http\Controllers\BoothController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,27 +13,16 @@ Route::post('/visitor-register', [AuthController::class, 'visitorRegister']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
-
 // Protected routes - تحتاج توكن
 Route::middleware('auth:sanctum')->group(function () {
 Route::get('/user', function (Request $request) {
-return $request->user();
-});
-
-
+        return $request->user();});
 Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-
-
-
-//Route::middleware('role:admin')->group(function () {
-//    Route::get('/users', [AdminController::class, 'getAllUsers']);
-//    Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
-//    Route::get('/exhibitions', [AdminController::class, 'getAllExhibitions']);
-//});
-//Route::middleware('role:Organizer')->group(function () {
-//    Route::post('/exhibitions', [OrganizerController::class, 'createExhibition']);
-//    Route::put('/exhibitions/{id}', [OrganizerController::class, 'updateExhibition']);
-//});
+//عرض و تعديل الملف الشخصي للمنظم 
+Route::middleware(['auth:sanctum', 'role:organizer'])
+->group(function () {
+    Route::get('/organizer-show', [ProfileController::class, 'organizerShow']);
+    Route::put('/organizer-update', [ProfileController::class, 'organizerUpdate']);
+});

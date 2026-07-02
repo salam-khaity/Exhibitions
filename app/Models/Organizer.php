@@ -17,4 +17,6 @@ class Organizer extends Model
         'website',
         'bio',
     ];
+
+
 }
