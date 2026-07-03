@@ -21,4 +21,10 @@ class Exhibition extends Model
     {
         return $this->belongsTo(User::class, 'organizer_id');
     }
+
+    public function booths()
+    {
+        return $this->hasMany(Booth::class, 'exhibition_id');
+    }
+
 }

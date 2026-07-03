@@ -38,6 +38,14 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/exhibitions/{id}/complete', [ExhibitionController::class, 'complete']);
     Route::put('/exhibitions/{id}/cancel', [ExhibitionController::class, 'cancel']);
 
+    // ادارة الاجنحة التابعة لمعرض محدد
+    Route::post('/exhibitions/{exhibitionId}/booths', [BoothController::class, 'store']);
+    Route::get('/exhibitions/{exhibitionId}/booths', [BoothController::class, 'index']);
+    Route::get('/booths/{boothId}', [BoothController::class, 'show']);
+    Route::put('/booths/{boothId}', [BoothController::class, 'update']);
+    Route::delete('/booths/{boothId}', [BoothController::class, 'destroy']);
+
+
 
 });
 
