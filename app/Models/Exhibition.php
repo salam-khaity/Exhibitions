@@ -14,7 +14,8 @@ class Exhibition extends Model
         'description',
         'location',
         'start_date',
-        'end_date'
+        'end_date',
+        'status',
     ];
     public function organizer()
     {

@@ -33,6 +33,12 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/exhibitions/{id}', [ExhibitionController::class, 'update']);
     Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'destroy']);
 
+    Route::put('/exhibitions/{id}/publish', [ExhibitionController::class, 'publish']);
+    Route::put('/exhibitions/{id}/start', [ExhibitionController::class, 'start']);
+    Route::put('/exhibitions/{id}/complete', [ExhibitionController::class, 'complete']);
+    Route::put('/exhibitions/{id}/cancel', [ExhibitionController::class, 'cancel']);
+
+
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])

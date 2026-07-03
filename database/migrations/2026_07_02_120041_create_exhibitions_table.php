@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('location', 255);
             $table->date('start_date');
             $table->date('end_date');
+            $table->enum('status', ['draft', 'published', 'ongoing', 'completed', 'cancelled'])
+                ->default('draft');
             $table->timestamps();
         });
     }

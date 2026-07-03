@@ -127,10 +127,175 @@ class ExhibitionController extends Controller
                 'message' => 'Exhibition deleted successfully'
             ]);
     }
+//    _________________________________________________________________________
+// حالات المعرض
+
+
+    private function findExhibition($id)
+    {
+        // المرحلة الأولى: هل المعرض موجود أصلاً؟
+        $exhibition = Exhibition::find($id);
+
+        if (!$exhibition) {
+            return [
+                'error' => true,
+                'code'  => 404,
+                'message' => 'Exhibition not found'
+            ];
+        }
+
+        // المرحلة الثانية: هل المعرض يتبع هذا المنظم؟
+        if ($exhibition->organizer_id !== Auth::id()) {
+            return [
+                'error' => true,
+                'code'  => 403,
+                'message' => 'You do not have permission to perform this action on this exhibition'
+            ];
+        }
+
+        return [
+            'error'       => false,
+            'exhibition'  => $exhibition
+        ];
+    }
+
+    // نشر المعرض — draft → published
+    public function publish($id)
+    {
+        $result = $this->findExhibition($id);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $exhibition = $result['exhibition'];
+        if ($exhibition->status !== 'draft') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition cannot be published because its current status is:  ' . $exhibition->status
+            ], 422);
+        }
+
+        $exhibition->update(['status' => 'published']);
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'The exhibition has been successfully published',
+            'data'    => $exhibition
+        ]);
+    }
+
+    // بدء المعرض — published → ongoing
+    public function start($id)
+    {
+        $result = $this->findExhibition($id);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $exhibition = $result['exhibition'];
+
+        if ($exhibition->status !== 'published') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition cannot be started because its current status is: ' . $exhibition->status
+            ], 422);
+        }
+        $exhibition->update(['status' => 'ongoing']);
+
+        return response()->json([
+                'status'  => 'success',
+            'message' => 'The exhibition has started successfully',
+            'data'    => $exhibition
+        ]);
+
+    }
+
+    // إنهاء المعرض — ongoing → completed
+     public function complete($id)
+    {
+
+        $result = $this->findExhibition($id);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $exhibition = $result['exhibition'];
+
+        if ($exhibition->status !== 'ongoing') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition cannot be completed because its current status is:  ' . $exhibition->status
+            ], 422);
+        }
+
+        $exhibition->update(['status' => 'completed']);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'The exhibition completed successfully',
+            'data'    => $exhibition
+        ]);
+    }
+
+    // إلغاء المعرض — draft أو published → cancelled
+    public function cancel($id)
+    {
+
+        $result = $this->findExhibition($id);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $exhibition = $result['exhibition'];
+
+        if ($exhibition->status === 'ongoing') {
+            return response()->json([
+            'status'  => 'error',
+            'message' => 'Exhibition cannot be cancelled because it is currently ongoing.ً'
+        ], 422);
+    }
+
+        if ($exhibition->status === 'completed') {
+            return response()->json([
+            'status'  => 'error',
+            'message' => 'Exhibition cannot be cancelled because it has already been completed.'
+        ], 422);
+    }
+
+        if ($exhibition->status === 'cancelled') {
+            return response()->json([
+            'status'  => 'error',
+            'message' => 'Exhibition is already cancelled.'
+        ], 422);
+    }
+
+        $exhibition->update(['status' => 'cancelled']);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'The exhibition has been successfully cancelled',
+            'data'    => $exhibition
+        ]);
+    }
 
 //    _________________________________________________________________________
 
-// قسم الادمن
+// عمليات ال CRUD التابعة لقسم الادمن
 
     public function list()
     {
@@ -217,5 +382,6 @@ class ExhibitionController extends Controller
             'message' => 'Exhibition deleted successfully'
         ]);
     }
+//    _________________________________________________________________________
 
 }
