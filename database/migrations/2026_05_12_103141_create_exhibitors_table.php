@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('country', 100);
             $table->text('description');
             $table->string('logo', 255)->nullable();
+            $table->string('avatar')->nullable();
             $table->timestamps();
         });
     }

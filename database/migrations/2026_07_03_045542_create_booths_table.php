@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('booths', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exhibition_id')->constrained('exhibitions')->onDelete('cascade');
+            $table->foreignId('exhibitor_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('booth_number', 20);
             $table->string('size', 50);
             $table->decimal('price', 10, 2);
+            $table->enum('status', ['available', 'pending', 'reserved'])->default('available');
             $table->timestamps();
         });
     }

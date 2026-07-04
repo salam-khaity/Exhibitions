@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,9 +29,11 @@ class ProfileController extends Controller
                 'commercial_register' => $profile->commercial_register,
                 'website'             => $profile->website,
                 'bio'                 => $profile->bio,
+                'avatar'              => $profile->avatar
+                                        ? asset($profile->avatar)
+                                        : null,
             ]
         ]);
-
     }
 
     public function organizerUpdate(Request $request)
@@ -46,6 +49,7 @@ class ProfileController extends Controller
         'commercial_register' => 'sometimes|string|max:50',
         'website'             => 'nullable|url',
         'bio'                 => 'sometimes|string',
+        'avatar'              => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
     ]);
 
     if ($validator->fails()) {
@@ -57,13 +61,10 @@ class ProfileController extends Controller
 
     $user = Auth::user();
 
-    if ($request->hasAny(['name', 'email'])) {
-        $user->update(
-            $request->only(['name', 'email'])
-        );
-    }
+        $userData = $request->only(['name', 'email']);
 
-    $companyData = $request->only([
+
+        $companyData = $request->only([
             'company_name',
             'company_type',
             'phone',
@@ -74,7 +75,27 @@ class ProfileController extends Controller
             'bio',
         ]);
 
-    if (!empty($companyData)) {
+        if ($request->hasFile('avatar')) {
+            $oldAvatar = $user->organizer->avatar;
+            if ($oldAvatar && file_exists(public_path($oldAvatar))) {
+                unlink(public_path($oldAvatar));
+            }
+        $companyData['avatar'] = ImageHelper::uploadAvatar(
+            $request->file('avatar'), 'organizers'
+        );
+    }
+        if (empty($userData) && empty($companyData)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No data to update'
+            ], 422);
+        }
+
+        if (!empty($userData)) {
+            $user->update($userData);
+        }
+
+        if (!empty($companyData)) {
         $user->organizer->update($companyData);
     }
 

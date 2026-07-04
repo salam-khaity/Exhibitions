@@ -24,7 +24,7 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
 ->group(function () {
     //عرض و تعديل الملف الشخصي للمنظم
     Route::get('/organizer-show', [ProfileController::class, 'organizerShow']);
-    Route::put('/organizer-update', [ProfileController::class, 'organizerUpdate']);
+    Route::post('/organizer-update', [ProfileController::class, 'organizerUpdate']);
 
     // Crud للمعارض للمنظم المسجل دخول حاليا فقط
     Route::get('/exhibitions', [ExhibitionController::class, 'index']);
@@ -45,6 +45,10 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/booths/{boothId}', [BoothController::class, 'update']);
     Route::delete('/booths/{boothId}', [BoothController::class, 'destroy']);
 
+// ── طلبات الحجز للمنظم ──
+    Route::get('/booth-requests', [BoothController::class, 'indexRequest']);
+    Route::put('/booths/{id}/approve', [BoothController::class, 'approve']);
+    Route::put('/booths/{id}/reject', [BoothController::class, 'reject']);
 
 
 });
@@ -52,8 +56,8 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
 Route::middleware(['auth:sanctum', 'role:admin'])
 ->prefix('admin')
 ->group(function () {
-    Route::get('/exhibitions',        [ExhibitionController::class, 'list']);
-    Route::get('/exhibitions/{id}',   [ExhibitionController::class, 'read']);
-    Route::put('/exhibitions/{id}',   [ExhibitionController::class, 'edit']);
-    Route::delete('/exhibitions/{id}',[ExhibitionController::class, 'delete']);
+    Route::get('/exhibitions', [ExhibitionController::class, 'list']);
+    Route::get('/exhibitions/{id}', [ExhibitionController::class, 'read']);
+    Route::put('/exhibitions/{id}', [ExhibitionController::class, 'edit']);
+    Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'delete']);
 });

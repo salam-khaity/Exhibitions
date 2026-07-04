@@ -15,5 +15,6 @@ class Exhibitor extends Model
         'country',
         'description',
         'logo',
+        'avatar',
     ];
 }

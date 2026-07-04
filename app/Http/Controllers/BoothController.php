@@ -48,7 +48,6 @@ class BoothController extends Controller
             ];
         }
 
-        // التحقق من أن الجناح ينتمي لمعرض يملكه هذا المنظم
         if ($booth->exhibition->organizer_id !== Auth::id()) {
             return [
                 'error'   => true,
@@ -190,5 +189,128 @@ class BoothController extends Controller
             'message' => 'The booth has been successfully deleted.'
         ]);
     }
+
+//ـــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+// إدارة طلبات الحجز للمنظم
+//ـــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+
+    private function findBooths($boothId)
+    {
+        $booth = Booth::with('exhibitor')->find($boothId);
+
+        if (!$booth) {
+            return [
+                'error'   => true,
+                'code'    => 404,
+                'message' => 'Booth not found'
+            ];
+        }
+
+        if ($booth->exhibition->organizer_id !== Auth::id()) {
+            return [
+                'error'   => true,
+                'code'    => 403,
+                'message' => 'You do not have permission to access this booth'
+            ];
+        }
+
+        return [
+            'error' => false,
+            'booth' => $booth
+        ];
+    }
+
+    // عرض جميع الطلبات المعلقة لجميع معارض المنظم
+    public function indexRequest()
+    {
+        $pendingBooths = Booth::where('status', 'pending')
+            ->whereHas('exhibition', function ($query) {
+                $query->where('organizer_id', Auth::id());
+            })
+            ->with([
+                'exhibition:id,title,location,start_date,end_date',
+                'exhibitor:id,name,email',
+                'exhibitor.exhibitor:user_id,brand_name,phone',
+            ])
+            ->get();
+
+        if ($pendingBooths->isEmpty()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'لا توجد طلبات معلقة حالياً',
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $pendingBooths
+        ]);
+
+    }
+
+    // قبول طلب حجز
+    public function approve($boothId)
+    {
+        $result = $this->findBooths($boothId);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $booth = $result['booth'];
+
+        if ($booth->status !== 'pending') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Cannot approve booth because its current status is: ' . $booth->status
+            ], 422);
+        }
+
+        $booth->update(['status' => 'reserved']);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'تم قبول طلب الحجز بنجاح',
+            'data'    => $booth
+        ]);
+    }
+    // رفض طلب حجز
+    public function reject($boothId)
+    {
+
+        $result = $this->findBooths($boothId);
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+            ], $result['code']);
+        }
+
+        $booth = $result['booth'];
+
+        if ($booth->status !== 'pending') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Cannot reject booth because its current status is: ' . $booth->status
+            ], 422);
+        }
+
+        // إعادة الجناح للحالة متاح وحذف العارض منه
+        $booth->update([
+            'status'       => 'available',
+            'exhibitor_id' => null,
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'تم رفض طلب الحجز',
+            'data'    => $booth
+        ]);
+    }
+
 
 }

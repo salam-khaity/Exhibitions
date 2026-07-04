@@ -16,6 +16,7 @@ class Organizer extends Model
         'commercial_register',
         'website',
         'bio',
+        'avatar',
     ];
 
 

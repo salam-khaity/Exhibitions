@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('commercial_register', 50);
             $table->string('website', 255)->nullable();
             $table->text('bio');
+            $table->string('avatar')->nullable();
             $table->timestamps();
         });
     }

@@ -10,13 +10,21 @@ class Booth extends Model
 
     protected $fillable = [
         'exhibition_id',
+        'exhibitor_id',
         'booth_number',
         'size',
         'price',
+        'status',
     ];
 
     public function exhibition()
     {
         return $this->belongsTo(Exhibition::class, 'exhibition_id');
     }
+    public function exhibitor()
+    {
+        return $this->belongsTo(User::class, 'exhibitor_id');
+    }
+
+
 }

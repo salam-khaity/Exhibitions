@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Exhibitor;
 use App\Models\Organizer;
 use App\Models\Visitor;
@@ -29,29 +30,30 @@ class AuthController extends Controller
     public function organizerRegister(Request $request){
 
         $validator = Validator::make($request->all(), [
-        'name'                  => 'required|string|max:100',
-        'email'                 => 'required|email|unique:users,email',
-            'password' => [
+            'name' => 'required|string|max:100|regex:/^[\pL\s]+$/u',
+            'email'=> 'required|email|unique:users,email',
+            'password'            => [
             'required',
-            'confirmed',
-            Password::min(6)
-            ->mixedCase()
-            ->numbers()
-            ->symbols(),
-],
-        'company_name'          => 'required|string|max:150',
-        'company_type'          => 'required|in:government,private,nonprofit',
-        'phone'                 => 'required|string|max:20',
-        'city'                  => 'required|string|max:100',
-        'country'               => 'required|string|max:100',
-        'commercial_register'   => 'required|string|max:50',
-        'website'               => 'nullable|url',
-        'bio'                   => 'required|string',
-        ]);
+                'confirmed',
+                Password::min(6)
+                ->mixedCase()
+                ->numbers()
+                ->symbols(),
+            ],
+            'company_name' => 'required|string|max:150',
+            'company_type' => 'required|in:government,private,nonprofit',
+            'phone' => 'required|regex:/^09\d{8}$/',
+            'city' => 'required|string|max:100',
+            'country' => 'required|string|max:100',
+            'commercial_register' => 'required|digits:10',
+            'website' => 'nullable|url',
+            'bio' => 'required|string',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+]);
 
         if ($validator->fails()) {
             return response()->json([
-                    'status'  => 'error',
+            'status'  => 'error',
             'message' => $validator->errors()->first()
         ], 422);
         }
@@ -63,6 +65,11 @@ class AuthController extends Controller
 
         ]);
 
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $avatarPath = ImageHelper::uploadAvatar($request->file('avatar'), 'organizers');
+        }
+
         Organizer::create([
             'user_id'              => $user->id,
             'company_name'         => $request->company_name,
@@ -73,6 +80,7 @@ class AuthController extends Controller
             'commercial_register'  => $request->commercial_register,
             'website'              => $request->website,
             'bio'                  => $request->bio,
+            'avatar'              => $avatarPath,
         ]);
 
         $token  = $user->createToken('MyApp')->plainTextToken;
@@ -84,23 +92,24 @@ class AuthController extends Controller
     public function exhibitorRegister(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'name'      => 'required|string|max:100',
-            'email'     => 'required|email|unique:users,email',
-            'password' => [
-            'required',
-            'confirmed',
-            Password::min(6)
-            ->mixedCase()
-            ->numbers()
-            ->symbols(),
+        'name'      => 'required|string|max:100',
+        'email'     => 'required|email|unique:users,email',
+        'password' => [
+        'required',
+        'confirmed',
+        Password::min(6)
+        ->mixedCase()
+        ->numbers()
+        ->symbols(),
         ],
         'brand_name'    => 'required|string|max:150',
         'industry'      => 'required|string|max:100',
-        'phone'         => 'required|string|max:20',
+        'phone'         => 'required|regex:/^09\d{8}$/',
         'city'          => 'required|string|max:100',
         'country'       => 'required|string|max:100',
         'description'   => 'required|string',
-        'logo'          => 'nullable|string',
+        'logo'          => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'avatar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -113,8 +122,18 @@ class AuthController extends Controller
             'email'     => $request->email,
             'password'  => bcrypt($request->password),
             'role'      => 'exhibitor',
-
         ]);
+
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = ImageHelper::uploadAvatar($request->file('logo'), 'logos');
+        }
+
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $avatarPath = ImageHelper::uploadAvatar($request->file('avatar'), 'exhibitors');
+        }
+
         Exhibitor::create([
         'user_id'       => $user->id,
         'brand_name'    => $request->brand_name,
@@ -123,7 +142,8 @@ class AuthController extends Controller
         'city'          => $request->city,
         'country'       => $request->country,
         'description'   => $request->description,
-        'logo'          => $request->logo,
+        'logo'          => $logoPath,
+        'avatar'        => $avatarPath,
         ]);
 
         $token = $user->createToken('MyApp')->plainTextToken;
@@ -145,7 +165,8 @@ class AuthController extends Controller
             ->numbers()
             ->symbols(),
         ],
-        'phone' => 'nullable|string|max:20',
+        'phone' => 'nullable|regex:/^09\d{8}$/',
+        'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -161,9 +182,16 @@ class AuthController extends Controller
             'role'      => 'visitor',
 
         ]);
-            Visitor::create([
-        'user_id'       => $user->id,
-        'phone'         => $request->phone,
+
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $avatarPath = ImageHelper::uploadAvatar($request->file('avatar'), 'visitors');
+        }
+
+        Visitor::create([
+            'user_id'       => $user->id,
+            'phone'         => $request->phone,
+            'avatar'        => $avatarPath,
         ]);
         $token  = $user->createToken('MyApp')->plainTextToken;
         return  response()->json([
