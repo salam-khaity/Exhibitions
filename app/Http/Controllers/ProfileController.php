@@ -52,7 +52,7 @@ class ProfileController extends Controller
         'commercial_register' => 'sometimes|string|max:50',
         'website'             => 'nullable|url',
         'bio'                 => 'sometimes|string',
-        'avatar'              => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'avatar'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
     ]);
 
     if ($validator->fails()) {
