@@ -32,4 +32,10 @@ class Exhibition extends Model
         return $this->hasMany(Image::class, 'exhibition_id');
     }
 
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class, 'exhibition_id');
+    }
+
+
 }

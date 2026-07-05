@@ -3,6 +3,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExhibitionController;
 use App\Http\Controllers\BoothController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VisitorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,7 +38,7 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::post('/exhibitions/{exhibitionId}/images', [ExhibitionController::class, 'addImages']);
     Route::delete('/exhibitions/{exhibitionId}/images/{imageId}', [ExhibitionController::class, 'deleteImage']);
 
-
+    // حالات المعرض
     Route::put('/exhibitions/{id}/publish', [ExhibitionController::class, 'publish']);
     Route::put('/exhibitions/{id}/start', [ExhibitionController::class, 'start']);
     Route::put('/exhibitions/{id}/complete', [ExhibitionController::class, 'complete']);
@@ -50,13 +51,24 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/booths/{boothId}', [BoothController::class, 'update']);
     Route::delete('/booths/{boothId}', [BoothController::class, 'destroy']);
 
+    Route::post('/booths/{boothId}/images', [BoothController::class, 'addImages']);
+    Route::delete('/booths/{boothId}/images/{imageId}', [BoothController::class, 'deleteImage']);
+
 // ── طلبات الحجز للمنظم ──
     Route::get('/booth-requests', [BoothController::class, 'indexRequest']);
     Route::put('/booths/{boothId}/approve', [BoothController::class, 'approve']);
     Route::put('/booths/{boothId}/reject', [BoothController::class, 'reject']);
 
-    Route::post('/booths/{boothId}/images', [BoothController::class, 'addImages']);
-    Route::delete('/booths/{boothId}/images/{imageId}', [BoothController::class, 'deleteImage']);
+
+    // إدارة الزوار
+    Route::get('/exhibitions/{id}/visitors', [VisitorController::class, 'index']);
+    Route::get('/exhibitions/{id}/visitors/export', [VisitorController::class, 'export']);
+
+    // الإحصائيات
+    Route::get('/statistics', [VisitorController::class, 'statistics']);
+    Route::get('/exhibitions/{id}/statistics', [VisitorController::class, 'show']);
+
+
 
 
 

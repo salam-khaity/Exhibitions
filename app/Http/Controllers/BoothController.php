@@ -347,7 +347,7 @@ class BoothController extends Controller
         if ($pendingBooths->isEmpty()) {
             return response()->json([
                 'status'  => 'success',
-                'message' => 'No pending requests at the momentً',
+                'message' => 'No pending requests at the moment',
             ]);
         }
 
