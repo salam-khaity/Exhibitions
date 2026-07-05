@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Exhibition;
+use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -10,11 +12,68 @@ use Illuminate\Support\Facades\Validator;
 class ExhibitionController extends Controller
 {
 
+    // دالة مساعدة لرفع الصور
+    private function uploadImages(array $images, int $exhibitionId): void
+    {
+        foreach ($images as $image) {
+            $path = ImageHelper::uploadAvatar($image, 'exhibitions');
+            Image::create([
+                'exhibition_id' => $exhibitionId,
+                'image_path'    => $path,
+            ]);
+        }
+    }
+
+
+    // دالة مساعدة لحذف جميع صور معرض
+    private function deleteImages(Exhibition $exhibition): void
+    {
+        foreach ($exhibition->images as $image) {
+            if (file_exists(public_path($image->image_path))) {
+                unlink(public_path($image->image_path));
+            }
+            $image->delete();
+        }
+    }
+    // دالة مساعدة للتحقق من وجود المعرض وملكيته
+    private function findExhibition($id)
+    {
+        $exhibition = Exhibition::find($id);
+        if (!$exhibition) {
+            return [
+                'error'   => true,
+                'code'    => 404,
+                'message' => 'Exhibition not found'
+            ];
+        }
+        if ($exhibition->organizer_id !== Auth::id()) {
+            return [
+                'error'   => true,
+                'code'    => 403,
+                'message' => 'You do not have permission to perform this action on this exhibition'
+            ];
+        }
+        return [
+            'error'      => false,
+            'exhibition' => $exhibition
+        ];
+    }
+
+
+
     public function index()
     {
         $exhibitions = Exhibition::where('organizer_id', Auth::id())
+            ->with(['images'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($exhibition) {
+                $exhibition->images->transform(function ($img) {
+                    $img->image_url = asset($img->image_path);
+                    return $img;
+                });
+                return $exhibition;
+            });
         return response()->json([
             'status' => 'success',
             'data' => $exhibitions
@@ -24,6 +83,7 @@ class ExhibitionController extends Controller
     public function show($id)
     {
         $exhibition = Exhibition::where('organizer_id', Auth::id())
+            ->with(['images'])
             ->find($id);
         if (!$exhibition) {
             return response()->json([
@@ -31,6 +91,12 @@ class ExhibitionController extends Controller
                 'message' => 'No exhibitions has been created'
             ], 404);
         }
+
+        $exhibition->images->transform(function ($img) {
+            $img->image_url = asset($img->image_path);
+            return $img;
+        });
+
         return response()->json([
             'status' => 'success',
             'data' => $exhibition
@@ -45,7 +111,9 @@ class ExhibitionController extends Controller
             'location' => 'required|string|max:255',
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+            'images'      => 'nullable|array|max:10',
+            'images.*'    => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -62,6 +130,10 @@ class ExhibitionController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
         ]);
+
+        if ($request->hasFile('images')) {
+            $this->uploadImages($request->file('images'), $exhibition->id);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -97,20 +169,97 @@ class ExhibitionController extends Controller
             ], 422);
         }
 
-        $exhibition->update($request->only([
+        $data = $request->only([
             'title',
             'description',
             'location',
             'start_date',
             'end_date'
-        ]));
+        ]);
+
+        if (empty($data)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No data provided to update'
+            ], 422);
+        }
+        $exhibition->update($data);
 
         return response()->json([
             'status' => 'success',
-            'data' => $exhibition
+            'data' => $exhibition->load('images')
         ]);
     }
 
+    // إضافة صور لمعرض موجود
+    public function addImages(Request $request, $id)
+    {
+        $exhibition = Exhibition::where('organizer_id', Auth::id())->find($id);
+
+        if (!$exhibition) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'images'   => 'required|array|max:10',
+            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $this->uploadImages($request->file('images'), $exhibition->id);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Images added successfully',
+            'data'    => $exhibition->load('images')
+        ]);
+    }
+
+    // حذف صورة واحدة محددة
+    public function deleteImage($exhibitionId, $imageId)
+    {
+        $exhibition = Exhibition::where('organizer_id', Auth::id())
+            ->find($exhibitionId);
+
+        if (!$exhibition) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition not found'
+            ], 404);
+        }
+
+        $image = Image::where('exhibition_id', $exhibitionId)
+            ->find($imageId);
+
+        if (!$image) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Image not found'
+            ], 404);
+        }
+
+        if (file_exists(public_path($image->image_path))) {
+            unlink(public_path($image->image_path));
+        }
+
+        $image->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'The image deleted successfully'
+        ]);
+    }
+
+    // حذف معرض مع جميع صوره
     public function destroy($id)
     {
         $exhibition = Exhibition::where('organizer_id', Auth::id())
@@ -131,33 +280,7 @@ class ExhibitionController extends Controller
 // حالات المعرض
 
 
-    private function findExhibition($id)
-    {
-        // المرحلة الأولى: هل المعرض موجود أصلاً؟
-        $exhibition = Exhibition::find($id);
 
-        if (!$exhibition) {
-            return [
-                'error' => true,
-                'code'  => 404,
-                'message' => 'Exhibition not found'
-            ];
-        }
-
-        // المرحلة الثانية: هل المعرض يتبع هذا المنظم؟
-        if ($exhibition->organizer_id !== Auth::id()) {
-            return [
-                'error' => true,
-                'code'  => 403,
-                'message' => 'You do not have permission to perform this action on this exhibition'
-            ];
-        }
-
-        return [
-            'error'       => false,
-            'exhibition'  => $exhibition
-        ];
-    }
 
     // نشر المعرض — draft → published
     public function publish($id)
@@ -175,7 +298,7 @@ class ExhibitionController extends Controller
         if ($exhibition->status !== 'draft') {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Exhibition cannot be published because its current status is:  ' . $exhibition->status
+                'message' => 'Exhibition cannot be published because its current status is: ' . $exhibition->status
             ], 422);
         }
 
@@ -235,7 +358,7 @@ class ExhibitionController extends Controller
         if ($exhibition->status !== 'ongoing') {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Exhibition cannot be completed because its current status is:  ' . $exhibition->status
+                'message' => 'Exhibition cannot be completed because its current status is: ' . $exhibition->status
             ], 422);
         }
 
@@ -266,7 +389,7 @@ class ExhibitionController extends Controller
         if ($exhibition->status === 'ongoing') {
             return response()->json([
             'status'  => 'error',
-            'message' => 'Exhibition cannot be cancelled because it is currently ongoing.ً'
+            'message' => 'Exhibition cannot be cancelled because it is currently ongoing.'
         ], 422);
     }
 
@@ -299,9 +422,16 @@ class ExhibitionController extends Controller
 
     public function list()
     {
-        $exhibitions = Exhibition::with('organizer:id,name,email')
+        $exhibitions = Exhibition::with('organizer:id,name,email', 'images')
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($exhibition) {
+                $exhibition->images->transform(function ($img) {
+                    $img->image_url = asset($img->image_path);
+                    return $img;
+                });
+                return $exhibition;
+            });
 
         return response()->json([
             'status' => 'success',
@@ -312,7 +442,7 @@ class ExhibitionController extends Controller
 
     public function read($id)
     {
-        $exhibition = Exhibition::with('organizer:id,name,email')
+        $exhibition = Exhibition::with('organizer:id,name,email', 'images')
             ->find($id);
         if (!$exhibition) {
             return response()->json([
@@ -320,6 +450,12 @@ class ExhibitionController extends Controller
                 'message' => 'Exhibition not found'
             ], 404);
         }
+
+        $exhibition->images->transform(function ($img) {
+            $img->image_url = asset($img->image_path);
+            return $img;
+        });
+
         return response()->json([
             'status' => 'success',
             'data'   => $exhibition
@@ -352,16 +488,25 @@ class ExhibitionController extends Controller
             ], 422);
         }
 
-        $exhibition->update($request->only([
+        $data = $request->only([
                 'title',
                 'description',
                 'location',
                 'start_date',
                 'end_date',
-            ]));
+        ]);
+
+        if (empty($data)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No data provided to update'
+            ], 422);
+        }
+
+        $exhibition->update($data);
 
         return response()->json([
-                'status' => 'success',
+            'status' => 'success',
             'data'   => $exhibition
         ]);
     }
@@ -375,10 +520,11 @@ class ExhibitionController extends Controller
                 'message' => 'The exhibition does not exist'
             ], 404);
         }
+        $this->deleteImages($exhibition);
         $exhibition->delete();
 
         return response()->json([
-                'status'  => 'success',
+            'status'  => 'success',
             'message' => 'Exhibition deleted successfully'
         ]);
     }

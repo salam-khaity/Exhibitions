@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Booth;
 use App\Models\Exhibition;
+use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -62,6 +64,29 @@ class BoothController extends Controller
         ];
     }
 
+    //ـــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+    private function uploadBoothImages(array $images, int $boothId): void
+    {
+        foreach ($images as $image) {
+            $path = ImageHelper::uploadAvatar($image, 'booths');
+            Image::create([
+                'booth_id'   => $boothId,
+                'image_path' => $path,
+            ]);
+        }
+    }
+
+    private function deleteBoothImages(Booth $booth): void
+    {
+        foreach ($booth->images as $image) {
+            if (file_exists(public_path($image->image_path))) {
+                unlink(public_path($image->image_path));
+            }
+            $image->delete();
+        }
+    }
+
+
     public function store(Request $request, $exhibitionId)
     {
         $result = $this->findExhibition($exhibitionId);
@@ -77,6 +102,8 @@ class BoothController extends Controller
             'booth_number' => 'required|string|max:20',
             'size'         => 'required|string|max:50',
             'price'        => 'required|numeric|min:0',
+            'images'       => 'nullable|array|max:10',
+            'images.*'     => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -93,9 +120,13 @@ class BoothController extends Controller
             'price'         => $request->price,
         ]);
 
+        if ($request->hasFile('images')) {
+            $this->uploadBoothImages($request->file('images'), $booth->id);
+        }
+
         return response()->json([
             'status' => 'success',
-            'data'   => $booth
+            'data'   => $booth->load('images')
         ], 201);
     }
 
@@ -110,7 +141,16 @@ class BoothController extends Controller
             ], $result['code']);
         }
 
-        $booths = Booth::where('exhibition_id', $exhibitionId)->get();
+        $booths = Booth::where('exhibition_id', $exhibitionId)
+            ->with(['images'])
+            ->get()
+            ->map(function ($booth) {
+                $booth->images->transform(function ($img) {
+                    $img->image_url = asset($img->image_path);
+                    return $img;
+                });
+                return $booth;
+            });
 
         return response()->json([
             'status' => 'success',
@@ -129,9 +169,14 @@ class BoothController extends Controller
             ], $result['code']);
         }
 
+        $booth = $result['booth']->load('images');
+        $booth->images->transform(function ($img) {
+            $img->image_url = asset($img->image_path);
+            return $img;
+        });
         return response()->json([
             'status' => 'success',
-            'data'   => $result['booth']
+            'data'   => $booth
         ]);
     }
 
@@ -159,15 +204,24 @@ class BoothController extends Controller
             ], 422);
         }
 
-        $result['booth']->update($request->only([
+        $data = $request->only([
                 'booth_number',
                 'size',
                 'price',
-            ]));
+        ]);
+
+        if (empty($data)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No data provided to update'],
+                422);
+        }
+
+        $result['booth']->update($data);
 
         return response()->json([
             'status' => 'success',
-            'data'   => $result['booth']
+            'data'   => $result['booth']->load('images')
         ]);
     }
 
@@ -182,11 +236,67 @@ class BoothController extends Controller
             ], $result['code']);
         }
 
+        $this->deleteBoothImages($result['booth']);
         $result['booth']->delete();
 
         return response()->json([
             'status'  => 'success',
             'message' => 'The booth has been successfully deleted.'
+        ]);
+    }
+
+    // إضافة صور لجناح موجود
+    public function addImages(Request $request, $boothId)
+    {
+        $result = $this->findBooth($boothId);
+        if ($result['error']) {
+            return response()->json(['status' => 'error', 'message' => $result['message']], $result['code']);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'images'   => 'required|array|max:10',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first()], 422);
+        }
+
+        $this->uploadBoothImages($request->file('images'), $boothId);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Images added successfully',
+            'data'    => $result['booth']->load('images')
+        ]);
+    }
+
+    // حذف صورة واحدة من جناح
+    public function deleteImage($boothId, $imageId)
+    {
+        $result = $this->findBooth($boothId);
+        if ($result['error']) {
+            return response()->json(['status' => 'error', 'message' => $result['message']], $result['code']);
+        }
+
+        $image = Image::where('booth_id', $boothId)->find($imageId);
+
+        if (!$image) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Image not found'
+            ], 404);
+        }
+
+        if (file_exists(public_path($image->image_path))) {
+            unlink(public_path($image->image_path));
+        }
+
+        $image->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Image deleted successfully'
         ]);
     }
 
@@ -237,7 +347,7 @@ class BoothController extends Controller
         if ($pendingBooths->isEmpty()) {
             return response()->json([
                 'status'  => 'success',
-                'message' => 'لا توجد طلبات معلقة حالياً',
+                'message' => 'No pending requests at the momentً',
             ]);
         }
 
@@ -273,7 +383,7 @@ class BoothController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'تم قبول طلب الحجز بنجاح',
+            'message' => 'Booth request approved successfully',
             'data'    => $booth
         ]);
     }
@@ -307,7 +417,7 @@ class BoothController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'تم رفض طلب الحجز',
+            'message' => 'Booth request rejected successfully',
             'data'    => $booth
         ]);
     }

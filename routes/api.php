@@ -33,6 +33,11 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/exhibitions/{id}', [ExhibitionController::class, 'update']);
     Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'destroy']);
 
+    // إدارة الصور
+    Route::post('/exhibitions/{exhibitionId}/images', [ExhibitionController::class, 'addImages']);
+    Route::delete('/exhibitions/{exhibitionId}/images/{imageId}', [ExhibitionController::class, 'deleteImage']);
+
+
     Route::put('/exhibitions/{id}/publish', [ExhibitionController::class, 'publish']);
     Route::put('/exhibitions/{id}/start', [ExhibitionController::class, 'start']);
     Route::put('/exhibitions/{id}/complete', [ExhibitionController::class, 'complete']);
@@ -47,8 +52,12 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
 
 // ── طلبات الحجز للمنظم ──
     Route::get('/booth-requests', [BoothController::class, 'indexRequest']);
-    Route::put('/booths/{id}/approve', [BoothController::class, 'approve']);
-    Route::put('/booths/{id}/reject', [BoothController::class, 'reject']);
+    Route::put('/booths/{boothId}/approve', [BoothController::class, 'approve']);
+    Route::put('/booths/{boothId}/reject', [BoothController::class, 'reject']);
+
+    Route::post('/booths/{boothId}/images', [BoothController::class, 'addImages']);
+    Route::delete('/booths/{boothId}/images/{imageId}', [BoothController::class, 'deleteImage']);
+
 
 
 });

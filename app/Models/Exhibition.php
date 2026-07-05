@@ -27,4 +27,9 @@ class Exhibition extends Model
         return $this->hasMany(Booth::class, 'exhibition_id');
     }
 
+    public function images()
+    {
+        return $this->hasMany(Image::class, 'exhibition_id');
+    }
+
 }

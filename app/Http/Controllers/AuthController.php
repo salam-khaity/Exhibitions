@@ -48,7 +48,7 @@ class AuthController extends Controller
             'commercial_register' => 'required|digits:10',
             'website' => 'nullable|url',
             'bio' => 'required|string',
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 ]);
 
         if ($validator->fails()) {
@@ -108,8 +108,8 @@ class AuthController extends Controller
         'city'          => 'required|string|max:100',
         'country'       => 'required|string|max:100',
         'description'   => 'required|string',
-        'logo'          => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'avatar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'logo'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'avatar'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -166,7 +166,7 @@ class AuthController extends Controller
             ->symbols(),
         ],
         'phone' => 'nullable|regex:/^09\d{8}$/',
-        'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
