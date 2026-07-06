@@ -62,4 +62,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Booth::class, 'exhibitor_id');
     }
+    public function exhibitor()
+    {
+        return $this->belongsTo(User::class, 'exhibitor_id');
+    }
+    public function visitor()
+    {
+        return $this->belongsTo(User::class, 'visitor_id');
+    }
 }

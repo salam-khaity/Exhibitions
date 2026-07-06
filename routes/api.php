@@ -1,8 +1,11 @@
 <?php
+
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExhibitionController;
 use App\Http\Controllers\BoothController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\VisitorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -59,26 +62,70 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
     Route::put('/booths/{boothId}/approve', [BoothController::class, 'approve']);
     Route::put('/booths/{boothId}/reject', [BoothController::class, 'reject']);
 
-
     // إدارة الزوار
     Route::get('/exhibitions/{id}/visitors', [VisitorController::class, 'index']);
     Route::get('/exhibitions/{id}/visitors/export', [VisitorController::class, 'export']);
 
     // الإحصائيات
-    Route::get('/statistics', [VisitorController::class, 'statistics']);
+    Route::get('/statistic', [VisitorController::class, 'statistics']);
     Route::get('/exhibitions/{id}/statistics', [VisitorController::class, 'show']);
-
-
-
-
 
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])
-->prefix('admin')
 ->group(function () {
-    Route::get('/exhibitions', [ExhibitionController::class, 'list']);
-    Route::get('/exhibitions/{id}', [ExhibitionController::class, 'read']);
-    Route::put('/exhibitions/{id}', [ExhibitionController::class, 'edit']);
-    Route::delete('/exhibitions/{id}', [ExhibitionController::class, 'delete']);
+    // المنظمون
+    Route::get('/organizers', [AdminController::class, 'indexOrganizers']);
+    Route::get('/organizers/{id}', [AdminController::class, 'showOrganizer']);
+    Route::put('/organizers/{id}', [AdminController::class, 'updateOrganizer']);
+    Route::put('/organizers/{id}/deactivate', [AdminController::class, 'deactivateOrganizer']);
+    Route::put('/organizers/{id}/activate', [AdminController::class, 'activateOrganizer']);
+    Route::delete('/organizers/{id}', [AdminController::class, 'deleteOrganizer']);
+//ــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+    // العارضون
+    Route::get('/exhibitors', [AdminController::class, 'indexExhibitors']);
+    Route::get('/exhibitors/{id}', [AdminController::class, 'showExhibitor']);
+    Route::put('/exhibitors/{id}', [AdminController::class, 'updateExhibitor']);
+    Route::put('/exhibitors/{id}/deactivate', [AdminController::class, 'deactivateExhibitor']);
+    Route::put('/exhibitors/{id}/activate', [AdminController::class, 'activateExhibitor']);
+    Route::delete('/exhibitors/{id}', [AdminController::class, 'deleteExhibitor']);
+//ــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+    // الزوار
+    Route::get('/visitors', [AdminController::class, 'indexVisitors']);
+    Route::get('/visitors/{id}', [AdminController::class, 'showVisitor']);
+    Route::put('/visitors/{id}/deactivate', [AdminController::class, 'deactivateVisitor']);
+    Route::put('/visitors/{id}/activate', [AdminController::class, 'activateVisitor']);
+    Route::delete('/visitors/{id}', [AdminController::class, 'deleteVisitor']);
+//ــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+    // المعارض
+    Route::get('/exhibition', [AdminController::class, 'index']);
+    Route::get('/exhibition/{id}', [AdminController::class, 'show']);
+    Route::put('/exhibition/{id}', [AdminController::class, 'update']);
+    Route::put('/exhibition/{id}/cancel', [AdminController::class, 'cancel']);
+    Route::delete('/exhibition/{id}', [AdminController::class, 'destroy']);
+//ــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+    // الإحصائيات
+    Route::get('/statistics', [AdminController::class, 'statistics']);
+
 });
+
+Route::middleware(['auth:sanctum', 'role:visitor'])
+->group(function () {
+
+    // الملف الشخصي
+    Route::get('/profile', [VisitorController::class, 'show']);
+    Route::put('/profile', [VisitorController::class, 'update']);
+    Route::put('/change-password', [VisitorController::class, 'changePassword']);
+    Route::post('/profile/avatar', [VisitorController::class, 'updateAvatar']);
+
+    // تصفح المعارض
+    Route::get('/exhibitions', [VisitorController::class, 'index']);
+    Route::get('/exhibitions/{id}', [VisitorController::class, 'show']);
+
+    // التذاكر والتسجيل
+    Route::post('/exhibitions/{id}/register', [TicketController::class, 'register']);
+    Route::get('/tickets', [TicketController::class, 'myTickets']);
+    Route::get('/tickets/{id}', [TicketController::class, 'showTicket']);
+    Route::delete('/tickets/{id}', [TicketController::class, 'cancelTicket']);
+});
+
