@@ -74,6 +74,10 @@ Route::middleware(['auth:sanctum', 'role:organizer'])
 
 Route::middleware(['auth:sanctum', 'role:admin'])
 ->group(function () {
+
+    Route::get('/admin-show', [ProfileController::class, 'adminShow']);
+    Route::put('/admin-update', [ProfileController::class, 'adminUpdate']);
+//ــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
     // المنظمون
     Route::get('/organizers', [AdminController::class, 'indexOrganizers']);
     Route::get('/organizers/{id}', [AdminController::class, 'showOrganizer']);
@@ -93,6 +97,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])
     // الزوار
     Route::get('/visitors', [AdminController::class, 'indexVisitors']);
     Route::get('/visitors/{id}', [AdminController::class, 'showVisitor']);
+    Route::put('/visitors/{id}', [AdminController::class, 'updateVisitor']);
     Route::put('/visitors/{id}/deactivate', [AdminController::class, 'deactivateVisitor']);
     Route::put('/visitors/{id}/activate', [AdminController::class, 'activateVisitor']);
     Route::delete('/visitors/{id}', [AdminController::class, 'deleteVisitor']);
@@ -113,10 +118,9 @@ Route::middleware(['auth:sanctum', 'role:visitor'])
 ->group(function () {
 
     // الملف الشخصي
-    Route::get('/profile', [VisitorController::class, 'show']);
-    Route::put('/profile', [VisitorController::class, 'update']);
-    Route::put('/change-password', [VisitorController::class, 'changePassword']);
-    Route::post('/profile/avatar', [VisitorController::class, 'updateAvatar']);
+    Route::get('/visitor-show', [ProfileController::class, 'visitorShow']);
+    Route::put('/visitor-update', [ProfileController::class, 'visitorUpdate']);
+    Route::post('/visitor-avatar', [ProfileController::class, 'updateAvatar']);
 
     // تصفح المعارض
     Route::get('/exhibitions', [VisitorController::class, 'index']);

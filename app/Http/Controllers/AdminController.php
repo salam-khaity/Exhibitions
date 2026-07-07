@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Booth;
 use App\Models\Exhibition;
+use App\Models\Image;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
@@ -97,6 +100,57 @@ class AdminController extends Controller
         }
 
         $user = $result['user'];
+
+        $profile = match($role) {
+            'organizer' => DB::table('organizers')->where('user_id', $user->id)->first(),
+            'exhibitor' => DB::table('exhibitors')->where('user_id', $user->id)->first(),
+            'visitor'   => DB::table('visitors')->where('user_id', $user->id)->first(),
+            default     => null,
+
+        };
+
+
+        if ($profile && isset($profile->avatar) && $profile->avatar) {
+        $avatarPath = public_path($profile->avatar);
+        if (file_exists($avatarPath)) {
+            unlink($avatarPath);
+            }
+        }
+
+        if ($role === 'exhibitor' && $profile && isset($profile->logo) && $profile->logo) {
+        $logoPath = public_path($profile->logo);
+        if (file_exists($logoPath)) {
+            unlink($logoPath);
+        }
+    }
+
+        if ($role === 'organizer') {
+            $exhibitionIds = Exhibition::where('organizer_id', $user->id)->pluck('id');
+            if ($exhibitionIds->isNotEmpty()) {
+                $boothIds = Booth::whereIn('exhibition_id', $exhibitionIds)->pluck('id');
+                $allImages = Image::whereIn('exhibition_id', $exhibitionIds)
+                    ->orWhereIn('booth_id', $boothIds)
+                    ->get();
+                foreach ($allImages as $img) {
+                    if ($img->image_path && file_exists(public_path($img->image_path))) {
+                        unlink(public_path($img->image_path));
+                    }
+                }
+                Image::whereIn('exhibition_id', $exhibitionIds)
+                ->orWhereIn('booth_id', $boothIds)
+                ->delete();
+
+            }
+        }
+
+        if ($role === 'exhibitor') {
+
+            Booth::where('exhibitor_id', $user->id)->update([
+                'exhibitor_id' => null,
+                'status'       => 'available',
+            ]);
+        }
+
         $user->tokens()->delete();
         $user->delete();
 
@@ -158,6 +212,13 @@ class AdminController extends Controller
         $validator = Validator::make($request->all(), [
             'name'  => 'sometimes|string|max:100',
             'email' => 'sometimes|email|unique:users,email,' . $id,
+            'password' => [
+                'sometimes',
+                \Illuminate\Validation\Rules\Password::min(6)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -168,6 +229,10 @@ class AdminController extends Controller
         }
 
         $data = $request->only(['name', 'email']);
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
 
         if (empty($data)) {
             return response()->json([
@@ -181,7 +246,6 @@ class AdminController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Organizer updated successfully',
-            'data'    => $result['user']
         ]);
     }
 
@@ -251,6 +315,13 @@ class AdminController extends Controller
         $validator = Validator::make($request->all(), [
             'name'  => 'sometimes|string|max:100',
             'email' => 'sometimes|email|unique:users,email,' . $id,
+            'password' => [
+            'sometimes',
+            \Illuminate\Validation\Rules\Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols(),
+        ],
         ]);
 
         if ($validator->fails()) {
@@ -261,6 +332,10 @@ class AdminController extends Controller
         }
 
         $data = $request->only(['name', 'email']);
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
 
         if (empty($data)) {
             return response()->json([
@@ -328,6 +403,57 @@ class AdminController extends Controller
         return response()->json(['status' => 'success', 'data' => $user]);
     }
 
+    public function updateVisitor(Request $request, $id)
+    {
+        $result = $this->findUser($id, 'visitor');
+
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $result['message']
+        ], 404);
+    }
+
+        $validator = Validator::make($request->all(), [
+            'name'     => 'sometimes|string|max:100',
+            'email'    => 'sometimes|email|unique:users,email,' . $id,
+            'password' => [
+            'sometimes',
+            \Illuminate\Validation\Rules\Password::min(6)
+            ->mixedCase()
+            ->numbers()
+            ->symbols(),
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+                'status'  => 'error',
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    $data = $request->only(['name', 'email']);
+
+    if ($request->filled('password')) {
+        $data['password'] = Hash::make($request->password);
+    }
+
+    if (empty($data)) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'No data provided to update'
+        ], 422);
+    }
+
+    $result['user']->update($data);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Visitor updated successfully'
+    ]);
+    }
+
     public function deactivateVisitor($id)
     {
         return $this->deactivateUser($id, 'visitor');
@@ -347,7 +473,10 @@ class AdminController extends Controller
 
     private function findExhibition($id)
     {
-        $exhibition = Exhibition::find($id);
+        $exhibition = Exhibition::with([
+                'images',
+                'booths.images'
+            ])->find($id);
 
         if (!$exhibition) {
             return ['error' => true, 'message' => 'Exhibition not found'];
@@ -450,6 +579,12 @@ class AdminController extends Controller
 
         $exhibition = $result['exhibition'];
 
+        if ($exhibition->status === 'ongoing') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Exhibition cannot be cancelled because it is currently ongoing.'
+            ], 422);
+        }
         if ($exhibition->status === 'cancelled') {
             return response()->json([
                 'status'  => 'error',
@@ -483,7 +618,22 @@ class AdminController extends Controller
             ], 404);
         }
 
-        $result['exhibition']->delete();
+        $exhibition = $result['exhibition'];
+
+        foreach ($exhibition->images as $image) {
+            if (file_exists(public_path($image->image_path))) {
+                unlink(public_path($image->image_path));
+            }
+        }
+
+        foreach ($exhibition->booths as $booth) {
+            foreach ($booth->images as $image) {
+                if (file_exists(public_path($image->image_path))) {
+                    unlink(public_path($image->image_path));
+                }
+            }
+        }
+        $exhibition->delete();
 
         return response()->json([
             'status'  => 'success',

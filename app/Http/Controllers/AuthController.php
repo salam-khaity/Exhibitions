@@ -210,6 +210,15 @@ class AuthController extends Controller
         {
             return response()->json(['message'=>'Invalid Credential'],401) ;
         }
+
+        if (!$user->is_active) {
+            $user->tokens()->delete();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Your account has been deactivated.'
+            ], 403);
+        }
         $token = $user->createToken($user->role . '-token')->plainTextToken;
         return  response()->json(['token'=>$token,'role'=>$user->role]);
     }

@@ -17,4 +17,5 @@ class Exhibitor extends Model
         'logo',
         'avatar',
     ];
+
 }

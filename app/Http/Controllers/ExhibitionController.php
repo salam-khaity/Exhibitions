@@ -262,19 +262,37 @@ class ExhibitionController extends Controller
     // حذف معرض مع جميع صوره
     public function destroy($id)
     {
-        $exhibition = Exhibition::where('organizer_id', Auth::id())
+        $exhibition = Exhibition::with(['images', 'booths.images'])
+            ->where('organizer_id', Auth::id())
             ->find($id);
+
         if (!$exhibition) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'The exhibition does not exist'
             ], 404);
         }
+
+        foreach ($exhibition->images as $image) {
+            if (file_exists(public_path($image->image_path))) {
+                unlink(public_path($image->image_path));
+            }
+        }
+
+        foreach ($exhibition->booths as $booth) {
+            foreach ($booth->images as $image) {
+                if (file_exists(public_path($image->image_path))) {
+                    unlink(public_path($image->image_path));
+                }
+            }
+        }
+
         $exhibition->delete();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Exhibition deleted successfully'
-            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Exhibition deleted successfully'
+        ]);
     }
 //    _________________________________________________________________________
 // حالات المعرض
@@ -528,6 +546,7 @@ class ExhibitionController extends Controller
             'message' => 'Exhibition deleted successfully'
         ]);
     }
-//    _________________________________________________________________________
+//ـــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــــ
+
 
 }

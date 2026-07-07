@@ -68,6 +68,6 @@ class User extends Authenticatable
     }
     public function visitor()
     {
-        return $this->belongsTo(User::class, 'visitor_id');
+        return $this->hasOne(Visitor::class, 'user_id');
     }
 }

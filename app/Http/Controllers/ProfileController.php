@@ -8,6 +8,7 @@ use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -107,5 +108,152 @@ class ProfileController extends Controller
         'message' => 'Profile Updated Successfully',
     ]);
     }
+
+    public function adminShow()
+    {
+        $user = Auth::user();
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+            'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->role,
+            ]
+        ]);
+    }
+    public function adminUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'  => 'sometimes|string|max:100',
+            'email' => 'sometimes|email|unique:users,email,' . Auth::id(),
+            'password' => [
+                'sometimes',
+                \Illuminate\Validation\Rules\Password::min(6)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $data = $request->only(['name', 'email']);
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        if (empty($data)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No data provided to update'
+            ], 422);
+        }
+
+        Auth::user()->update($data);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Profile updated successfully'
+        ]);
+    }
+
+    public function visitorShow()
+    {
+        $user    = Auth::user();
+        $profile = $user->visitor;
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'phone'  => $profile->phone  ?? null,
+                'avatar' => $profile->avatar
+                    ? asset($profile->avatar)
+                    : null,
+            ]
+        ]);
+    }
+
+    public function visitorUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'  => 'sometimes|string|max:100',
+            'email' => 'sometimes|email|unique:users,email,' . Auth::id(),
+            'phone' => 'sometimes|regex:/^09\d{8}$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $user    = Auth::user();
+        $profile = $user->visitor;
+
+        $userData = $request->only(['name', 'email']);
+        if (!empty($userData)) {
+            $user->update($userData);
+        }
+
+        $visitorData = $request->only(['phone']);
+        if (!empty($visitorData)) {
+            $profile->update($visitorData);
+        }
+
+        if (empty($userData) && empty($visitorData)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No data provided to update'
+            ], 422);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Profile updated successfully'
+        ]);
+    }
+
+    public function updateAvatar(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $profile = Auth::user()->visitor;
+
+        if ($profile->avatar && file_exists(public_path($profile->avatar))) {
+            unlink(public_path($profile->avatar));
+        }
+
+        $path = ImageHelper::uploadAvatar($request->file('avatar'), 'visitors');
+        $profile->update(['avatar' => $path]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Avatar updated successfully',
+            'avatar'  => asset($path)
+        ]);
+    }
+
+
+
+
 
 }
